@@ -1,0 +1,19 @@
+# Environment Configuration for Tailored Resume Service
+
+# S3 Configuration
+S3_BUCKET_NAME=tailored-resume-bucket
+AWS_REGION=us-east-1
+
+# AWS Credentials (if not using IAM roles)
+# AWS_ACCESS_KEY_ID=your_access_key
+# AWS_SECRET_ACCESS_KEY=your_secret_key
+
+# TinyTeX Configuration
+TINYTEX_PATH=/usr/local/bin/pdflatex
+
+# Server Configuration
+PORT=3000
+NODE_ENV=production
+
+# Temp Directory
+TEMP_DIR=/tmp/resume-generation

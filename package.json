@@ -1,0 +1,36 @@
+{
+  "name": "tailored-resume-service",
+  "version": "1.0.0",
+  "description": "S3-based resume PDF generation service with LaTeX",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "curl http://localhost:3000/health"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "aws-sdk": "^2.1490.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "resume",
+    "pdf",
+    "latex",
+    "s3",
+    "aws",
+    "express"
+  ],
+  "author": "Sai Kiran Anumalla",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "your-github-repo-url"
+  }
+}
