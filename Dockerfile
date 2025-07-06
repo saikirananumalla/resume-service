@@ -12,15 +12,15 @@ RUN apk add --no-cache \
 
 # Install TinyTeX with proper permissions
 RUN cd /tmp && \
-    wget -qO- "https://yihui.org/tinytex/install-bin-unix.sh" > install-tinytex.sh && \
-    chmod +x install-tinytex.sh && \
-    ./install-tinytex.sh && \
-    rm install-tinytex.sh
+    sudo wget -qO- "https://yihui.org/tinytex/install-bin-unix.sh" > install-tinytex.sh && \
+    sudo chmod +x install-tinytex.sh && \
+    sudo ./install-tinytex.sh && \
+    sudo rm install-tinytex.sh
 
 ENV PATH="/root/.TinyTeX/bin/x86_64-linux:$PATH"
 
 # Install required LaTeX packages
-RUN tlmgr install \
+RUN sudo tlmgr install \
     geometry \
     parskip \
     array \
