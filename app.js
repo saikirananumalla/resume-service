@@ -2,6 +2,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const multer = require('multer');
 const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -12,6 +13,21 @@ const app = express();
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Multer configuration for file uploads
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'text/plain' || file.originalname.endsWith('.tex')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only .txt and .tex files are allowed'), false);
+        }
+    }
+});
 
 // Configuration
 const config = {
@@ -220,13 +236,14 @@ app.get('/', (req, res) => {
         bucket: config.s3BucketName,
         endpoints: {
             health: '/health',
-            generate: 'POST /api/generate-pdf',
+            generate: 'POST /api/generate-pdf (text input)',
+            generateFile: 'POST /api/generate-pdf-file (file upload)',
             files: '/api/files'
         }
     });
 });
 
-// Generate PDF endpoint
+// Generate PDF endpoint (text input)
 app.post('/api/generate-pdf', async (req, res) => {
     try {
         const { resumeContent, jobTitle = 'resume', userId = 'default' } = req.body;
@@ -246,6 +263,34 @@ app.post('/api/generate-pdf', async (req, res) => {
         
     } catch (error) {
         console.error(`❌ API Error: ${error.message}`);
+        res.status(500).json({ 
+            error: error.message,
+            success: false 
+        });
+    }
+});
+
+// Generate PDF endpoint (file upload)
+app.post('/api/generate-pdf-file', upload.single('resumeFile'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ 
+                error: 'resumeFile is required',
+                success: false 
+            });
+        }
+        
+        const { jobTitle = 'resume', userId = 'default' } = req.body;
+        const resumeContent = req.file.buffer.toString('utf8');
+        
+        console.log(`📋 PDF generation request from file - Job: ${jobTitle}, User: ${userId}, File: ${req.file.originalname}`);
+        
+        const result = await pdfGenerator.generatePDF(resumeContent, jobTitle, userId);
+        
+        res.json(result);
+        
+    } catch (error) {
+        console.error(`❌ File Upload API Error: ${error.message}`);
         res.status(500).json({ 
             error: error.message,
             success: false 
