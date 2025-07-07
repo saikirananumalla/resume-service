@@ -1,32 +1,6 @@
 # Tailored Resume Service Dockerfile
 FROM node:18-alpine
 
-# Install TinyTeX and dependencies
-RUN apk add --no-cache \
-    curl \
-    bash \
-    perl \
-    wget \
-    fontconfig \
-    && rm -rf /var/cache/apk/*
-
-# Install TinyTeX with proper permissions
-RUN cd /tmp && \
-    sudo wget -qO- "https://yihui.org/tinytex/install-bin-unix.sh" > install-tinytex.sh && \
-    sudo chmod +x install-tinytex.sh && \
-    sudo ./install-tinytex.sh && \
-    sudo rm install-tinytex.sh
-
-ENV PATH="/root/.TinyTeX/bin/x86_64-linux:$PATH"
-
-# Install required LaTeX packages
-RUN sudo tlmgr install \
-    geometry \
-    parskip \
-    array \
-    ifthen \
-    hyperref
-
 # Create app directory
 WORKDIR /usr/src/app
 
