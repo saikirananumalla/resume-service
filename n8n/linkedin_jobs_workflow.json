@@ -1,0 +1,531 @@
+{
+  "name": "AI-Powered Job Search Automation - by Sai Kiran Anumalla",
+  "meta": {
+    "description": "Automated job search system that scrapes LinkedIn jobs, analyzes them against user profile, and generates tailored resumes. Developed by Sai Kiran Anumalla.",
+    "author": "Sai Kiran Anumalla",
+    "github": "https://github.com/saikirananumalla",
+    "linkedin": "https://linkedin.com/in/saikirananumalla"
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Please analyze this job opportunity:\n\n===JOB POSTING DATA===\nTitle: {{$json.title}}\nLink: {{$json.link}}\nDate: {{$json.isoDate}}\nCreator: {{$json.creator}}\n\nContent (Short):\n{{$json.contentSnippet}}\n\nContent (Full):\n{{$json.content}}\n===END JOB DATA===\n\n\nAnalyze this job against the candidate's profile and provide your scoring and recommendation.\n\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a personal job matching assistant and career advocate. Your primary mission is to identify and recommend opportunities that could advance the candidate's career.\n\nYou must ALWAYS output your analysis in this exact JSON format:\n\n{\n  \"Company\": \"Company name only\",\n  \"Role\": \"Exact job title\",\n  \"Location\": \"City, State/Country\",\n  \"Score\": 75,\n  \"Category\": \"Good\",\n  \"Tech Stack\": [\"technology1\", \"technology2\", \"technology3\"],\n  \"Salary\": \"120k-150k or Not specified\",\n  \"Job URL\": \"https://linkedin.com/jobs/...\",\n  \"Why It Matches\": \"2-3 sentences explaining fit\",\n  \"Concerns\": \"Main concerns including visa status\",\n  \"Action Plan\": [\"Specific step 1\", \"Specific step 2\", \"Specific step 3\"]\n}\n\n[REPLACE THIS SECTION WITH YOUR DETAILED CANDIDATE PROFILE]\n\nCANDIDATE PROFILE: [YOUR NAME]\nPERSONAL INFORMATION\nName: [Your Name]\nLocation: [Your Location]\nContact: [Your Email], [Your Phone]\nPortfolio: [Your Portfolio URL]\nLinkedIn: [Your LinkedIn]\nGitHub: [Your GitHub]\nVisa Status: [Your Visa Status]\n\nEDUCATION\n[Your Education Details]\n\nPROFESSIONAL EXPERIENCE\n[Your Experience Details]\n\nTECHNICAL SKILLS\n[Your Skills]\n\nKEY PROJECTS\n[Your Projects]\n\nJOB PREFERENCES\n[Your Preferences]\n\n[END CANDIDATE PROFILE SECTION]\n\nSCORING CRITERIA:\n- Skills Match (45%): Perfect match = full points, Good match = high points, Transferable skills = moderate points\n- Experience Level (25%): Entry-level (0-2 years) = 5/5, Mid-level (2-3 years) = 5/5, 3+ years = 1/5\n- Location/Remote (5%): Remote = 5/5, Local area = 5/5, Tech hubs = 4/5, Relocation = 3/5\n- Visa Sponsorship (10%): Sponsorship mentioned = 5/5, Large company = 4/5, Small company = 3/5\n- Growth Opportunity (5%): Clear growth path = 5/5, Good culture = 4/5, Standard = 3/5\n- Compensation (10%): Based on salary range and target expectations\n\nOnly save jobs with score ≥ 60 to the main database.\nJobs with score < 60 go to rejected database with reason."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        220
+      ],
+      "id": "ai-job-analyzer",
+      "name": "AI Job Analyzer",
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "responseFormat": "json_object",
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -60,
+        420
+      ],
+      "id": "openai-model",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "YOUR_NOTION_DATABASE_ID_FOR_APPROVED_JOBS",
+          "mode": "list",
+          "cachedResultName": "Job Opportunities Database",
+          "cachedResultUrl": "https://www.notion.so/YOUR_DATABASE_URL"
+        },
+        "title": "=",
+        "simple": false,
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Action Plan|rich_text",
+              "textContent": "={{ $json[\"Action Plan\"] }}"
+            },
+            {
+              "key": "Category|select",
+              "selectValue": "={{ $json.Category }}"
+            },
+            {
+              "key": "Role|rich_text",
+              "textContent": "={{ $json.Role }}"
+            },
+            {
+              "key": "Company|title",
+              "title": "={{ $json.Company }}"
+            },
+            {
+              "key": "Location|rich_text",
+              "textContent": "={{ $json.Location }}"
+            },
+            {
+              "key": "Score|number",
+              "numberValue": "={{ $json.Score }}"
+            },
+            {
+              "key": "Date Found|date",
+              "date": "={{ $json[\"Date Found\"] }}"
+            },
+            {
+              "key": "Tech Stack|rich_text",
+              "textContent": "={{ $json[\"Tech Stack\"] }}"
+            },
+            {
+              "key": "Salary|rich_text",
+              "textContent": "={{ $json.Salary }}"
+            },
+            {
+              "key": "Job URL|url",
+              "urlValue": "={{ $json[\"Job URL\"] }}"
+            },
+            {
+              "key": "Concerns|rich_text",
+              "textContent": "={{ $json.Concerns }}"
+            },
+            {
+              "key": "Applied|checkbox",
+              "checkboxValue": "={{ $json.Applied }}"
+            },
+            {
+              "key": "Status|select",
+              "selectValue": "={{ $json.Status }}"
+            },
+            {
+              "key": "Source|select",
+              "selectValue": "={{ $json.Source }}"
+            },
+            {
+              "key": "Why It Matches|rich_text",
+              "textContent": "={{ $json[\"Why It Matches\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1340,
+        220
+      ],
+      "id": "save-approved-job",
+      "name": "Save Approved Job",
+      "alwaysOutputData": true,
+      "credentials": {
+        "notionApi": {
+          "id": "YOUR_NOTION_CREDENTIAL_ID",
+          "name": "Notion Account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -740,
+        200
+      ],
+      "id": "job-processor-loop",
+      "name": "Job Processor Loop",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "YOUR_SLACK_CHANNEL_ID",
+          "mode": "list",
+          "cachedResultName": "job-alerts"
+        },
+        "text": "=📅 [{{new Date().toLocaleString('en-US', {month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit', timeZone: 'America/New_York'})}}] \n\n✅ New jobs processed and delivered\n\n🚀 Check your Notion database for updates!",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "slack-notification",
+      "name": "Slack Notification",
+      "webhookId": "YOUR_SLACK_WEBHOOK_ID",
+      "notesInFlow": false,
+      "credentials": {
+        "slackApi": {
+          "id": "YOUR_SLACK_CREDENTIAL_ID",
+          "name": "Slack Account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Data Validator and Formatter for Notion\n// Developed by Sai Kiran Anumalla\n// Processes AI output and formats it for Notion database\n\nconst rawOutput = $input.item.json || $input.item || {};\n\n// Parse the JSON from the AI Agent output\nlet aiOutput;\ntry {\n  if (rawOutput.output) {\n    aiOutput = typeof rawOutput.output === 'string' \n      ? JSON.parse(rawOutput.output) \n      : rawOutput.output;\n  } else {\n    aiOutput = rawOutput;\n  }\n} catch (e) {\n  console.error('Failed to parse AI output:', e);\n  aiOutput = {};\n}\n\n// Helper Functions\nfunction extractCompany(text) {\n  if (!text) return 'Unknown Company';\n  \n  const patterns = [\n    /\\s+hiring.*$/i,\n    /\\s+is\\s+hiring.*$/i,\n    /\\s+seeks.*$/i,\n    /\\s+looking\\s+for.*$/i,\n    /\\s+-\\s+.*$/,\n    /\\s+\\|.*$/,\n    /\\s+@.*$/\n  ];\n  \n  let cleaned = text.toString();\n  patterns.forEach(pattern => {\n    cleaned = cleaned.replace(pattern, '');\n  });\n  \n  return cleaned.trim() || 'Unknown Company';\n}\n\nfunction validateScore(score) {\n  const num = parseInt(score);\n  if (isNaN(num) || num < 0 || num > 100) {\n    throw new Error(`Invalid score: ${score}. Must be 0-100.`);\n  }\n  return num;\n}\n\nfunction cleanTextField(text, maxLength = 1000) {\n  if (!text) return '';\n  \n  return text.toString()\n    .replace(/\\n\\s*[-•]\\s*/g, '\\n• ')\n    .replace(/\\n{3,}/g, '\\n\\n')\n    .trim()\n    .substring(0, maxLength);\n}\n\n// Process and validate the data\ntry {\n  const validated = {\n    Company: extractCompany(aiOutput.company || aiOutput.Company || 'Unknown Company'),\n    Role: cleanTextField(aiOutput.role || aiOutput.Role || 'Unknown Role', 200),\n    Location: cleanTextField(aiOutput.location || aiOutput.Location || 'Not Specified', 100),\n    Score: validateScore(aiOutput.score || aiOutput.Score || 0),\n    Category: (() => {\n      const score = validateScore(aiOutput.score || aiOutput.Score || 0);\n      if (score >= 90) return 'Best';\n      if (score >= 75) return 'Good';\n      return 'Average';\n    })(),\n    \"Date Found\": $input.item.json.isoDate || new Date().toISOString(),\n    \"Tech Stack\": Array.isArray(aiOutput[\"Tech Stack\"]) ? \n      aiOutput[\"Tech Stack\"].join(\", \") : \n      (aiOutput[\"Tech Stack\"] || aiOutput.techStack || \"\"),\n    Salary: cleanTextField(aiOutput.salary || aiOutput.Salary || 'Not specified', 100),\n    \"Job URL\": aiOutput.jobUrl || aiOutput[\"Job URL\"] || aiOutput.job_url || '',\n    \"Why It Matches\": cleanTextField(\n      aiOutput.whyItMatches || aiOutput[\"Why It Matches\"] || 'No analysis provided.', 500\n    ),\n    Concerns: cleanTextField(aiOutput.concerns || aiOutput.Concerns || 'No concerns.', 500),\n    \"Action Plan\": Array.isArray(aiOutput[\"Action Plan\"]) ? \n      aiOutput[\"Action Plan\"].map(item => `• ${item}`).join(\"\\n\") : \n      (aiOutput[\"Action Plan\"] || \"• Review job description\\n• Update resume\\n• Apply\"),\n    Applied: false,\n    Status: \"New\",\n    Source: \"LinkedIn RSS\"\n  };\n  \n  console.log('Validated data:', JSON.stringify(validated, null, 2));\n  return validated;\n  \n} catch (error) {\n  console.error('Validation error:', error.message);\n  \n  return {\n    Company: 'Unknown Company',\n    Role: 'Unknown Role - Validation Error',\n    Location: 'Unknown',\n    Score: 0,\n    Category: 'Average',\n    \"Date Found\": new Date().toISOString().split('T')[0],\n    \"Tech Stack\": \"\",\n    Salary: 'Not specified',\n    \"Job URL\": '',\n    \"Why It Matches\": `Validation error: ${error.message}`,\n    Concerns: 'Could not properly parse job data',\n    \"Action Plan\": \"• Manual review required\",\n    Applied: false,\n    Status: \"New\",\n    Source: \"LinkedIn RSS\"\n  };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        220
+      ],
+      "id": "data-validator",
+      "name": "Data Validator",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "YOUR_RSS_FEED_URL",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -1000,
+        200
+      ],
+      "id": "rss-job-reader",
+      "name": "RSS Job Reader"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1220,
+        200
+      ],
+      "id": "hourly-trigger",
+      "name": "Hourly Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Completion Message Generator\n// Developed by Sai Kiran Anumalla\n// Generates summary message for Slack notification\n\nconst allItems = $input.all();\nconst totalJobs = allItems.length;\n\nconst now = new Date();\nconst timeString = now.toLocaleString('en-US', { \n  month: 'short', \n  day: 'numeric', \n  hour: 'numeric', \n  minute: '2-digit',\n  hour12: true \n});\n\nreturn {\n  message: `📅 [${timeString}]\\n✅ Processed ${totalJobs} jobs\\n🚀 Check Notion for updates!`,\n  timestamp: new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -520,
+        100
+      ],
+      "id": "completion-message",
+      "name": "Completion Message"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "score-threshold-check",
+              "leftValue": "={{ $json.Score }}",
+              "rightValue": 60,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        220
+      ],
+      "id": "score-filter",
+      "name": "Score Filter (≥60)"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "YOUR_NOTION_DATABASE_ID_FOR_REJECTED_JOBS",
+          "mode": "list",
+          "cachedResultName": "Rejected Jobs Database",
+          "cachedResultUrl": "https://www.notion.so/YOUR_REJECTED_DATABASE_URL"
+        },
+        "title": "=",
+        "simple": false,
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Action Plan|rich_text",
+              "textContent": "={{ $json[\"Action Plan\"] }}"
+            },
+            {
+              "key": "Category|select",
+              "selectValue": "={{ $json.Category }}"
+            },
+            {
+              "key": "Role|rich_text",
+              "textContent": "={{ $json.Role }}"
+            },
+            {
+              "key": "Company|title",
+              "title": "={{ $json.Company }}"
+            },
+            {
+              "key": "Location|rich_text",
+              "textContent": "={{ $json.Location }}"
+            },
+            {
+              "key": "Score|number",
+              "numberValue": "={{ $json.Score }}"
+            },
+            {
+              "key": "Date Found|date",
+              "date": "={{ $json[\"Date Found\"] }}"
+            },
+            {
+              "key": "Tech Stack|rich_text",
+              "textContent": "={{ $json[\"Tech Stack\"] }}"
+            },
+            {
+              "key": "Salary|rich_text",
+              "textContent": "={{ $json.Salary }}"
+            },
+            {
+              "key": "Job URL|url",
+              "urlValue": "={{ $json[\"Job URL\"] }}"
+            },
+            {
+              "key": "Concerns|rich_text",
+              "textContent": "={{ $json.Concerns }}"
+            },
+            {
+              "key": "Applied|checkbox",
+              "checkboxValue": "={{ $json.Applied }}"
+            },
+            {
+              "key": "Status|select",
+              "selectValue": "={{ $json.Status }}"
+            },
+            {
+              "key": "Source|select",
+              "selectValue": "={{ $json.Source }}"
+            },
+            {
+              "key": "Why It Matches|rich_text",
+              "textContent": "={{ $json[\"Why It Matches\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1340,
+        540
+      ],
+      "id": "save-rejected-job",
+      "name": "Save Rejected Job",
+      "alwaysOutputData": true,
+      "credentials": {
+        "notionApi": {
+          "id": "YOUR_NOTION_CREDENTIAL_ID",
+          "name": "Notion Account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Job Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Job Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Data Validator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Job Processor Loop": {
+      "main": [
+        [
+          {
+            "node": "Completion Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Job Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Approved Job": {
+      "main": [
+        [
+          {
+            "node": "Job Processor Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Validator": {
+      "main": [
+        [
+          {
+            "node": "Score Filter (≥60)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Job Reader": {
+      "main": [
+        [
+          {
+            "node": "Job Processor Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hourly Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Job Reader",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Completion Message": {
+      "main": [
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Filter (≥60)": {
+      "main": [
+        [
+          {
+            "node": "Save Approved Job",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Rejected Job",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Rejected Job": {
+      "main": [
+        [
+          {
+            "node": "Job Processor Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "TEMPLATE_VERSION_ID",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "YOUR_N8N_INSTANCE_ID"
+  },
+  "id": "job-search-automation-template",
+  "tags": [
+    "automation",
+    "job-search", 
+    "ai",
+    "linkedin",
+    "notion"
+  ]
+}
