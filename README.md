@@ -1,6 +1,7 @@
 # Tailored Resume Service
 
 A Node.js service that generates tailored PDF resumes using LaTeX and stores them in AWS S3.
+Check n8n folder for the workflow powered by OpenAI
 
 ## Features
 
